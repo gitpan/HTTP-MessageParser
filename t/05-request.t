@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More;
 
-plan tests => 17;
+plan tests => 18;
 
 use_ok( 'HTTP::MessageParser' );
 
@@ -13,6 +13,10 @@ my @good = (
     "GET / HTTP/1.1\x0D\x0A\x0D\x0A",
     [ 'GET', '/', 'HTTP/1.1', [], \'' ],
     'Request A',
+
+    "GET /a/b/c/d HTTP/1.1\x0D\x0A\x0D\x0A",
+    [ 'GET', '/a/b/c/d', 'HTTP/1.1', [], \'' ],
+    'Request AA',
 
     "\x0D\x0AGET / HTTP/1.1\x0D\x0A\x0D\x0A",
     [ 'GET', '/', 'HTTP/1.1', [], \'' ],

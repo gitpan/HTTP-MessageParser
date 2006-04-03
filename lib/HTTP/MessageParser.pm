@@ -3,7 +3,7 @@ package HTTP::MessageParser;
 use strict;
 use warnings;
 
-our $VERSION = 0.1;
+our $VERSION = 0.2;
 
 use Carp qw[];
 
@@ -38,7 +38,7 @@ use Carp qw[];
     my $Token    = qr/[\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E-\x7A\x7C\x7E]/;
     my $Header   = qr/($Token+)$LWS*:$LWS*((?:$TEXT|$LWS)*)\x0D\x0A/;
     my $Version  = qr/HTTP\/[0-9]+\.[0-9]+/;
-    my $Request  = qr/(?:\x0D\x0A)*($Token+)\x20+([^\x20+])\x20+($Version)\x0D\x0A/;
+    my $Request  = qr/(?:\x0D\x0A)*($Token+)\x20+([^\x20]+)\x20+($Version)\x0D\x0A/;
     my $Response = qr/($Version)\x20+([0-9]{3})\x20+($TEXT*)\x0D\x0A/;
 
     sub parse_request ($$) {

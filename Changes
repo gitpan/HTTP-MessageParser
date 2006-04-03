@@ -1,4 +1,8 @@
 Revision history for Perl extension HTTP::MessageParser
 
+0.2 2006-04-03 00:00
+    - Fixed bug in Request-URI parsing.
+    - Added eg/echo.pl
+
 0.1 2006-04-03 00:00
     - First release.
