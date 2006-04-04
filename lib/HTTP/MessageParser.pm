@@ -3,7 +3,7 @@ package HTTP::MessageParser;
 use strict;
 use warnings;
 
-our $VERSION = 0.2;
+our $VERSION = 0.3;
 
 use Carp qw[];
 
@@ -33,23 +33,35 @@ use Carp qw[];
     # http://lists.w3.org/Archives/Public/ietf-http-wg/2004JanMar/thread.html#50
     # http://lists.w3.org/Archives/Public/ietf-http-wg/2005AprJun/0016.html
 
-    my $LWS      = qr/\x0D\x0A[\x09\x20]|[\x09\x20]/;
+    my $CRLF     = qr/\x0D?\x0A/;
+    my $LWS      = qr/$CRLF[\x09\x20]|[\x09\x20]/;
     my $TEXT     = qr/[\x20-\xFF]/;
     my $Token    = qr/[\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E-\x7A\x7C\x7E]/;
-    my $Header   = qr/($Token+)$LWS*:$LWS*((?:$TEXT|$LWS)*)\x0D\x0A/;
+    my $Header   = qr/($Token+)$LWS*:$LWS*((?:$TEXT|$LWS)*)$CRLF/;
     my $Version  = qr/HTTP\/[0-9]+\.[0-9]+/;
-    my $Request  = qr/(?:\x0D\x0A)*($Token+)\x20+([^\x20]+)\x20+($Version)\x0D\x0A/;
-    my $Response = qr/($Version)\x20+([0-9]{3})\x20+($TEXT*)\x0D\x0A/;
+    my $Request  = qr/(?:$CRLF)*($Token+)[\x09\x20]+([\x21-\xFF]+)(?:[\x09\x20]+($Version))?$CRLF/;
+    my $Response = qr/($Version)[\x09\x20]+([0-9]{3})[\x09\x20]+($TEXT*)$CRLF/;
 
     sub parse_request ($$) {
         my $class  = shift;
         my $string = ref $_[0] ? shift : \( my $copy = shift );
 
         my @request = $class->parse_request_line($string);
-        my $headers = $class->parse_headers($string);
+        my $version = $class->parse_version( $request[2] );
+        my $headers = [];
 
-        $$string =~ s/^\x0D\x0A//o
-          or Carp::croak('Bad Request');
+        if ( $version >= 1000 ) {
+
+            $headers = $class->parse_headers($string);
+
+            $$string =~ s/^$CRLF//o
+              or Carp::croak('Bad Request');
+        }
+        else {
+
+            $$string eq ''
+              or Carp::croak('Bad Request');
+        }
 
         return ( @request, $headers, $string );
     }
@@ -61,7 +73,7 @@ use Carp qw[];
         $$string =~ s/^$Request//o
           or Carp::croak('Bad Request-Line');
 
-        return ( $1, $2, $3 );
+        return ( $1, $2, $3 || 'HTTP/0.9' );
     }
 
     sub parse_response ($$) {
@@ -71,7 +83,7 @@ use Carp qw[];
         my @response = $class->parse_response_line($string);
         my $headers  = $class->parse_headers($string);
 
-        $$string =~ s/^\x0D\x0A//o
+        $$string =~ s/^$CRLF//o
           or Carp::croak('Bad Response');
 
         return ( @response, $headers, $string );
@@ -216,7 +228,7 @@ Throws an exception upon failure.
     my ( $major, $minor ) = HTTP::MessageParser->parse_version($string);
     my $version = HTTP::MessageParser->parse_version($string);
 
-Parses a C<HTTP-Version> string. In scalar context it returns a version number 
+Parses a C<HTTP-Version> string. In scalar context it returns a version number
 ( C<major * 1000 + minor> ). In list context it returns C<major> and C<minor> as two
 separate integers.
 

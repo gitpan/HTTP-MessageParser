@@ -50,6 +50,10 @@ my @good = (
     "HTTP/1.1 200 \x0D\x0A\x0D\x0A",
     [ 'HTTP/1.1', '200', '', [], \'' ],
     'Response H without a Reason-Phrase',
+    
+    "HTTP/1.1 200 OK\x0A\x0A",
+    [ 'HTTP/1.1', '200', 'OK', [], \'' ],
+    'Response I only LF in request line RFC 2616 19.3',
 );
 
 while ( my ( $message, $expected, $test ) = splice( @good, 0, 3 ) ) {
@@ -61,11 +65,7 @@ while ( my ( $message, $expected, $test ) = splice( @good, 0, 3 ) ) {
 my @bad = (
     "HTTP/1.1 200 OK\x0D\x0A",
     qr/^Bad Response/,
-    'Response I missing end of the header fields CRLF',
-
-    "HTTP/1.1 200 OK\x0A\x0A",
-    qr/^Bad Status-Line/,
-    'Response J only LF in request line',
+    'Response J missing end of the header fields CRLF',
 
     "XXXX/1.1 200 OK\x0D\x0A\x0D\x0A",
     qr/^Bad Status-Line/,

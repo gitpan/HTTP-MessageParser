@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More;
 
-plan tests => 18;
+plan tests => 20;
 
 use_ok( 'HTTP::MessageParser' );
 
@@ -58,6 +58,14 @@ my @good = (
     "GET / HTTP/12.12\x0D\x0A\x0D\x0A",
     [ 'GET', '/', 'HTTP/12.12', [], \'' ],
     'Request H with future HTTP version',
+    
+    "GET / HTTP/1.1\x0A\x0A",
+    [ 'GET', '/', 'HTTP/1.1', [], \'' ],
+    'Request I only LF in request line RFC 2616 19.3',
+    
+    "GET /\x0D\x0A",
+    [ 'GET', '/', 'HTTP/0.9', [], \'' ],
+    'Request J RFC 1945 5.0 (Simple-Request)',
 );
 
 while ( my ( $message, $expected, $test ) = splice( @good, 0, 3 ) ) {
@@ -68,37 +76,37 @@ while ( my ( $message, $expected, $test ) = splice( @good, 0, 3 ) ) {
 my @bad = (
     "GET / HTTP/1.1\x0D\x0A",
     qr/^Bad Request/,
-    'Request I missing end of the header fields CRLF',
-
-    "GET / HTTP/1.1\x0A\x0A",
-    qr/^Bad Request-Line/,
-    'Request J only LF in request line',
+    'Request K missing end of the header fields CRLF',
 
     "G<E>T / HTTP/1.1\x0D\x0A\x0D\x0A",
     qr/^Bad Request-Line/,
-    'Request K Method contains seperator chars',
+    'Request L Method contains seperator chars',
 
     "GET / XXXX/1.1\x0D\x0A\x0D\x0A",
     qr/^Bad Request-Line/,
-    'Request L Invalid HTTP version',
+    'Request M Invalid HTTP version',
 
     "POST / HTTP/1.1\x0D\x0A"
   . "Content-Length: 6"
   . "\x0D\x0A"
   . "MyBody",
     qr/^Bad Request/,
-    'Request M missing CRLF after header',
+    'Request N missing CRLF after header',
 
     "POST / HTTP/1.1\x0D\x0A"
   . "Content<->Length: 6\x0D\x0A"
   . "\x0D\x0A"
   . "MyBody",
     qr/^Bad Request/,
-    'Request N invalid chars in field-name',
+    'Request O invalid chars in field-name',
 
     "GET /sss/ /ss HTTP/1.1\x0D\x0A\x0D\x0A",
     qr/^Bad Request-Line/,
-    'Request O Invalid LWS in uri',
+    'Request P Invalid LWS in uri',
+    
+    "GET /sss/\x0D\x0A\x0D\x0A",
+    qr/^Bad Request/,
+    'Request Q Simple-Request does not allow headers',
 );
 
 while ( my ( $message, $expected, $test ) = splice( @bad, 0, 3 ) ) {
